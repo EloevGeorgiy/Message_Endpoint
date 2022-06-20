@@ -1,0 +1,44 @@
+version: "3"
+services:
+  redis:
+    image: redis
+    restart: always
+    ports:
+      - "6379:6379"
+
+  mongo:
+    image: mongo
+    restart: always
+    logging:
+      driver: none
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: jojo
+      MONGO_INITDB_ROOT_PASSWORD: example
+
+  bots:
+    environment:
+      - PORT=3000
+      - REDIS=redis://redis:6379
+      - CORE_ORIGIN=http://core:3001/ 
+    build:
+      dockerfile: ../bots/Dockerfile
+      context: ../bots
+    ports:
+      - "3000:3000"
+    depends_on:
+     - redis
+    restart: unless-stopped
+
+  core:
+    environment:
+      - PORT=3001
+      - REDIS=redis://redis:6379
+      - DB_URL=mongodb://jojo:example@mongo:27017/
+    build:
+      dockerfile: ../core/Dockerfile
+      context: ../core
+    ports:
+      - "3001:3001"
+    depends_on:
+    - redis
+    restart: unless-stopped
